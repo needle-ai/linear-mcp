@@ -164,9 +164,19 @@ export class LinearGraphQLClient {
   }
 
   // Search projects
-  async searchProjects(filter: { name?: { eq: string } }): Promise<SearchProjectsResponse> {
+  async searchProjects(
+    filter: { 
+      name?: { eq: string } | { contains: string },
+      team?: { id: { in: string[] } },
+      state?: { name: { notIn: string[] } } 
+    }, 
+    first: number = 50
+  ): Promise<SearchProjectsResponse> {
     const { SEARCH_PROJECTS_QUERY } = await import('./queries.js');
-    return this.execute<SearchProjectsResponse>(SEARCH_PROJECTS_QUERY, { filter });
+    return this.execute<SearchProjectsResponse>(SEARCH_PROJECTS_QUERY, { 
+      filter,
+      first 
+    });
   }
 
   // Delete a single issue
