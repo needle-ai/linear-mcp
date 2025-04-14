@@ -6,21 +6,21 @@
 export const toolSchemas = {
   linear_auth: {
     name: 'linear_auth',
-    description: 'Initialize OAuth flow with Linear',
+    description: 'Initialize OAuth authentication flow with Linear. This is the first step in connecting to a Linear workspace.',
     inputSchema: {
       type: 'object',
       properties: {
         clientId: {
           type: 'string',
-          description: 'Linear OAuth client ID',
+          description: 'Your Linear OAuth client ID from the Linear developer settings',
         },
         clientSecret: {
           type: 'string',
-          description: 'Linear OAuth client secret',
+          description: 'Your Linear OAuth client secret from the Linear developer settings',
         },
         redirectUri: {
           type: 'string',
-          description: 'OAuth redirect URI',
+          description: 'The URI where Linear should redirect after authentication',
         },
       },
       required: ['clientId', 'clientSecret', 'redirectUri'],
@@ -29,13 +29,13 @@ export const toolSchemas = {
 
   linear_auth_callback: {
     name: 'linear_auth_callback',
-    description: 'Handle OAuth callback',
+    description: 'Complete the OAuth flow by handling the callback from Linear with the authorization code.',
     inputSchema: {
       type: 'object',
       properties: {
         code: {
           type: 'string',
-          description: 'OAuth authorization code',
+          description: 'The authorization code received from Linear after user authorization',
         },
       },
       required: ['code'],
@@ -44,55 +44,42 @@ export const toolSchemas = {
 
   linear_create_issue: {
     name: 'linear_create_issue',
-    description: 'Create a new issue in Linear',
+    description: 'Create a new issue in a specified team with title, description, and optional parameters.',
     inputSchema: {
       type: 'object',
       properties: {
+        teamId: {
+          type: 'string',
+          description: 'ID of the team where the issue will be created',
+        },
         title: {
           type: 'string',
-          description: 'Issue title',
+          description: 'Title of the issue',
         },
         description: {
           type: 'string',
-          description: 'Issue description',
-        },
-        teamId: {
-          type: 'string',
-          description: 'Team ID',
+          description: 'Description of the issue in markdown format',
         },
         assigneeId: {
           type: 'string',
-          description: 'Assignee user ID',
-          optional: true,
+          description: 'ID of the user to assign the issue to (optional)',
+        },
+        stateId: {
+          type: 'string',
+          description: 'ID of the issue state (optional)',
         },
         priority: {
           type: 'number',
-          description: 'Issue priority (0-4)',
-          optional: true,
-        },
-        projectId: {
-          type: 'string',
-          description: 'Project ID',
-          optional: true,
-        },
-        createAsUser: {
-          type: 'string',
-          description: 'Name to display for the created issue',
-          optional: true,
-        },
-        displayIconUrl: {
-          type: 'string',
-          description: 'URL of the avatar to display',
-          optional: true,
+          description: 'Priority of the issue (0-4, where 0 is no priority, 1 is urgent, 2 is high, 3 is medium, 4 is low) (optional)',
         },
       },
-      required: ['title', 'description', 'teamId'],
+      required: ['teamId', 'title', 'description'],
     },
   },
 
   linear_create_project_with_issues: {
     name: 'linear_create_project_with_issues',
-    description: 'Create a new project with associated issues. Note: Project requires teamIds (array) not teamId (single value).',
+    description: 'Create a new project and associated issues in one operation. Projects can span multiple teams.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -101,18 +88,18 @@ export const toolSchemas = {
           properties: {
             name: {
               type: 'string',
-              description: 'Project name',
+              description: 'Name of the project',
             },
             description: {
               type: 'string',
-              description: 'Project description (optional)',
+              description: 'Description of the project in markdown format (optional)',
             },
             teamIds: {
               type: 'array',
               items: {
                 type: 'string',
               },
-              description: 'Array of team IDs this project belongs to (Required). Use linear_get_teams to get available team IDs.',
+              description: 'List of team IDs this project belongs to (required)',
               minItems: 1
             },
           },
@@ -125,15 +112,15 @@ export const toolSchemas = {
             properties: {
               title: {
                 type: 'string',
-                description: 'Issue title',
+                description: 'Title of the issue',
               },
               description: {
                 type: 'string',
-                description: 'Issue description',
+                description: 'Description of the issue in markdown format',
               },
               teamId: {
                 type: 'string',
-                description: 'Team ID (must match one of the project teamIds)',
+                description: 'ID of the team where the issue will be created (must match one of the project teamIds)',
               },
             },
             required: ['title', 'description', 'teamId'],
@@ -188,7 +175,7 @@ export const toolSchemas = {
 
   linear_bulk_update_issues: {
     name: 'linear_bulk_update_issues',
-    description: 'Update multiple issues at once',
+    description: 'Update multiple issues at once with the same field changes. More efficient than making separate calls for each issue.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -204,18 +191,34 @@ export const toolSchemas = {
           properties: {
             stateId: {
               type: 'string',
-              description: 'New state ID',
-              optional: true,
+              description: 'ID of the workflow state to set for all issues (optional)',
             },
             assigneeId: {
               type: 'string',
-              description: 'New assignee ID',
-              optional: true,
+              description: 'ID of the user to assign all issues to (optional)',
             },
             priority: {
               type: 'number',
-              description: 'New priority (0-4)',
-              optional: true,
+              description: 'Priority level to set for all issues (0-4, where 0 is no priority, 1 is urgent) (optional)',
+            },
+            labelIds: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description: 'List of label IDs to apply to all issues (optional)',
+            },
+            title: {
+              type: 'string',
+              description: 'New title to set for all issues (optional)',
+            },
+            description: {
+              type: 'string',
+              description: 'New description in markdown format to set for all issues (optional)',
+            },
+            projectId: {
+              type: 'string',
+              description: 'ID of the project to move all issues to (optional)',
             },
           },
         },
@@ -226,90 +229,63 @@ export const toolSchemas = {
 
   linear_search_issues: {
     name: 'linear_search_issues',
-    description: 'Search for issues with filtering and pagination',
+    description: 'Search for issues using a query string. Returns matching issues that the authenticated user has access to.',
     inputSchema: {
       type: 'object',
       properties: {
         query: {
           type: 'string',
-          description: 'Search query string',
-          optional: true,
+          description: 'Search query to find issues (searches across title, description, ID, etc.)',
         },
-        teamIds: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          description: 'Filter by team IDs',
-          optional: true,
-        },
-        assigneeIds: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          description: 'Filter by assignee IDs',
-          optional: true,
-        },
-        states: {
-          type: 'array',
-          items: {
-            type: 'string',
-          },
-          description: 'Filter by state names',
-          optional: true,
-        },
-        priority: {
+        limit: {
           type: 'number',
-          description: 'Filter by priority (0-4)',
+          description: 'Maximum number of issues to return',
           optional: true,
         },
-        first: {
-          type: 'number',
-          description: 'Number of issues to return (default: 50)',
-          optional: true,
-        },
-        after: {
+        teamId: {
           type: 'string',
-          description: 'Cursor for pagination',
+          description: 'Filter issues to a specific team',
           optional: true,
         },
-        orderBy: {
-          type: 'string',
-          description: 'Field to order by (default: updatedAt)',
+        includeArchived: {
+          type: 'boolean',
+          description: 'Whether to include archived issues in the results',
           optional: true,
         },
       },
+      required: ['query'],
     },
   },
 
   linear_get_teams: {
     name: 'linear_get_teams',
-    description: 'Get all teams with their states and labels',
+    description: 'Get a list of all teams in the Linear workspace accessible to the authenticated user.',
     inputSchema: {
       type: 'object',
       properties: {},
+      required: [],
     },
   },
 
   linear_get_user: {
     name: 'linear_get_user',
-    description: 'Get current user information',
+    description: 'Get information about the currently authenticated user, including their name, email, and role.',
     inputSchema: {
       type: 'object',
       properties: {},
+      required: [],
     },
   },
 
   linear_delete_issue: {
     name: 'linear_delete_issue',
-    description: 'Delete an issue',
+    description: 'Delete a specific issue from Linear. This action is permanent and cannot be undone.',
     inputSchema: {
       type: 'object',
       properties: {
         id: {
           type: 'string',
-          description: 'Issue identifier (e.g., ENG-123)',
+          description: 'Issue identifier (e.g., "ABC-123") to delete',
         },
       },
       required: ['id'],
@@ -318,7 +294,7 @@ export const toolSchemas = {
 
   linear_delete_issues: {
     name: 'linear_delete_issues',
-    description: 'Delete multiple issues',
+    description: 'Delete multiple issues at once. More efficient than making separate calls for each issue. This action is permanent.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -327,7 +303,7 @@ export const toolSchemas = {
           items: {
             type: 'string',
           },
-          description: 'List of issue identifiers to delete',
+          description: 'List of issue identifiers (e.g., ["ABC-123", "ABC-124"]) to delete',
         },
       },
       required: ['ids'],
@@ -336,13 +312,13 @@ export const toolSchemas = {
 
   linear_get_project: {
     name: 'linear_get_project',
-    description: 'Get project information',
+    description: 'Get detailed information about a specific project, including its members, status, and related issues.',
     inputSchema: {
       type: 'object',
       properties: {
         id: {
           type: 'string',
-          description: 'Project identifier',
+          description: 'ID of the project to retrieve',
         },
       },
       required: ['id'],
@@ -351,25 +327,37 @@ export const toolSchemas = {
 
   linear_search_projects: {
     name: 'linear_search_projects',
-    description: 'Search for projects by name',
+    description: 'Search for projects by name or description. Returns matching projects accessible to the authenticated user.',
     inputSchema: {
       type: 'object',
       properties: {
-        name: {
+        query: {
           type: 'string',
-          description: 'Project name to search for (exact match)',
+          description: 'Search query to find projects by name or description',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of projects to return (default: 10)',
+        },
+        includeArchived: {
+          type: 'boolean',
+          description: 'Whether to include archived projects in the results (default: false)',
         },
       },
-      required: ['name'],
+      required: ['query'],
     },
   },
 
   linear_create_issues: {
     name: 'linear_create_issues',
-    description: 'Create multiple issues at once',
+    description: 'Create multiple issues at once in a single team. More efficient than making separate calls for each issue.',
     inputSchema: {
       type: 'object',
       properties: {
+        teamId: {
+          type: 'string',
+          description: 'ID of the team where all issues will be created',
+        },
         issues: {
           type: 'array',
           items: {
@@ -377,46 +365,106 @@ export const toolSchemas = {
             properties: {
               title: {
                 type: 'string',
-                description: 'Issue title',
+                description: 'Title of the issue',
               },
               description: {
                 type: 'string',
-                description: 'Issue description',
-              },
-              teamId: {
-                type: 'string',
-                description: 'Team ID',
+                description: 'Description of the issue in markdown format (optional)',
               },
               assigneeId: {
                 type: 'string',
-                description: 'Assignee user ID',
-                optional: true,
+                description: 'ID of the user to assign the issue to (optional)',
+              },
+              stateId: {
+                type: 'string',
+                description: 'ID of the issue state (optional)',
               },
               priority: {
                 type: 'number',
-                description: 'Issue priority (0-4)',
-                optional: true,
-              },
-              projectId: {
-                type: 'string',
-                description: 'Project ID',
-                optional: true,
+                description: 'Priority of the issue (0-4, where 0 is no priority, 1 is urgent, 2 is high, 3 is medium, 4 is low) (optional)',
               },
               labelIds: {
                 type: 'array',
                 items: {
                   type: 'string',
                 },
-                description: 'Label IDs to apply',
-                optional: true,
-              }
+                description: 'List of label IDs to apply to the issue (optional)',
+              },
             },
-            required: ['title', 'description', 'teamId'],
+            required: ['title'],
           },
-          description: 'List of issues to create',
+          description: 'List of issues to create, each with its own properties',
         },
       },
-      required: ['issues'],
+      required: ['teamId', 'issues'],
+    },
+  },
+
+  linear_get_issue: {
+    name: 'linear_get_issue',
+    description: 'Get detailed information about a specific issue including its description, assignees, status, and more.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        issueId: {
+          type: 'string',
+          description: 'ID of the issue to retrieve (either the numeric ID or the full identifier like "ABC-123")',
+        },
+      },
+      required: ['issueId'],
+    },
+  },
+
+  linear_get_projects: {
+    name: 'linear_get_projects',
+    description: 'Get a list of projects with optional filtering by state or team.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        teamId: {
+          type: 'string',
+          description: 'ID of the team to filter projects by (optional)',
+        },
+        filter: {
+          type: 'string',
+          description: 'Filter string for searching projects (optional)',
+        },
+        includeArchived: {
+          type: 'boolean',
+          description: 'Whether to include archived projects in the results (default: false)',
+        },
+      },
+      required: [],
+    },
+  },
+
+  linear_get_team_states: {
+    name: 'linear_get_team_states',
+    description: 'Get all workflow states for a specific team (e.g., "Todo", "In Progress", "Done").',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        teamId: {
+          type: 'string',
+          description: 'ID of the team to get workflow states for',
+        },
+      },
+      required: ['teamId'],
+    },
+  },
+
+  linear_get_team_labels: {
+    name: 'linear_get_team_labels',
+    description: 'Get all labels for a specific team that can be applied to issues.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        teamId: {
+          type: 'string',
+          description: 'ID of the team to get labels for',
+        },
+      },
+      required: ['teamId'],
     },
   },
 };

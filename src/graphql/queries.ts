@@ -104,12 +104,13 @@ export const GET_USER_QUERY = gql`
 `;
 
 export const SEARCH_PROJECTS_QUERY = gql`
-  query SearchProjects($filter: ProjectFilter) {
-    projects(filter: $filter) {
+  query SearchProjects($filter: ProjectFilter, $first: Int) {
+    projects(filter: $filter, first: $first) {
       nodes {
         id
         name
         description
+        state
         url
         teams {
           nodes {
@@ -128,6 +129,7 @@ export const GET_PROJECT_QUERY = gql`
       id
       name
       description
+      state
       url
       teams {
         nodes {
